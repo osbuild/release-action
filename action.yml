@@ -1,57 +1,44 @@
-name: "Upstream release"
-description: "Perform an upstream GitHub release"
+name: "Release bot"
+description: "Create a tag and push it"
 
 inputs:
   token:
-    description: "A GitHub token for creating a release"
+    description: "A GitHub token for creating a tag"
     required: true
-  slack_webhook_url:
-    description: "A Slack incoming Webhook URL"
+  component:
+    description: "The name of the repository triggering this action"
+    required: true
+  username:
+    description: "A GitHub user name"
+    required: true
+  email:
+    description: "The GitHub user's email address"
     required: true
 
 runs:
   using: "composite"
   steps:
     - name: Checkout current repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
           token: "${{ inputs.TOKEN }}"
           fetch-depth: 0
 
-    - name: Fetch all tags
-      # GitHub's checkout action doesn't properly fetch the current tag
-      run: git fetch --tags --prune --force
+    - name: Install Python and depends
+      run: |
+        sudo apt install python3
+        pip install -r ${{ github.action_path }}/requirements.txt
       shell: bash
 
-    - name: Generate release information
-      run: ${{ github.action_path }}/release-info.sh
+    - name: Set up git
+      run:  |
+        git clone https://"${{ inputs.TOKEN }}"@github.com/osbuild/"${{ inputs.COMPONENT }}".git ${{ github.action_path }}/"${{ inputs.COMPONENT }}"
+        git config --global user.email "${{ inputs.EMAIL }}"
+        git config --global user.name "${{ inputs.USERNAME }}"
       shell: bash
 
-    - name: Create GitHub release
-      # https://github.com/marketplace/actions/create-release
-      uses: ncipollo/release-action@v1.8.10
-      with:
-        name: "${{  env.release_version }}"
-        token: "${{ inputs.TOKEN }}"
-        bodyFile: "release.md"
-
-    - name: Bump version
-      run: ${{ github.action_path }}/bump-version.sh "${{  env.release_version }}"
+    - name: Create and push tag
+      run: |
+        cd ${{ github.action_path }}/"${{ inputs.COMPONENT }}"/
+        ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}"
       shell: bash
-
-    - name: Commit new version
-      # https://github.com/marketplace/actions/add-commit
-      uses: EndBug/add-and-commit@v7
-      with:
-        branch: main
-        message: "Post release version bump\n\n[skip ci]"
-        add: "-u *"
-
-    - name: Send release announcement to osbuild Slack channel
-      id: slack
-      uses: slackapi/slack-github-action@v1.16.0
-      with:
-        payload: "{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"🚀 *<https://github.com/osbuild/${{  env.component }}/releases/tag/v${{  env.release_version }}|${{  env.component }} ${{  env.release_version }}>* just got released upstream! 🚀\"}}]}"
-      env:
-        SLACK_WEBHOOK_URL: ${{ inputs.SLACK_WEBHOOK_URL }}
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
