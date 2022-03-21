@@ -146,7 +146,7 @@ def create_release_tag(args, repo, tag, latest_tag):
             f"----------------\n"
             f"{summaries}\n\n"
             f"Contributions from: {contributors}\n\n"
-            f"— Somewhere on the internet, {today.strftime('%Y-%m-%d')}")
+            f"— Somewhere on the Internet, {today.strftime('%Y-%m-%d')}")
 
     res = run_command(['git', 'tag', '-m', message, tag, 'HEAD'])
     logging.debug(res)
