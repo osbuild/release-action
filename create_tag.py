@@ -93,12 +93,9 @@ def list_prs_for_hash(args, api, repo, commit_hash):
 def get_pullrequest_infos(args, repo, hashes):
     """Fetch the titles of all related pull requests"""
     logging.debug("Collect pull request titles...")
-    api = GhApi(repo=repo, owner='ochosi', token=args.token)
-    summaries = []
-    i = 0
+    api = GhApi(repo=repo, owner='osbuild', token=args.token)
 
-    for commit_hash in hashes:
-        i += 1
+    for i, commit_hash in enumerate(hashes):
         print(f"Fetching PR for commit {i}/{len(hashes)} ({commit_hash})")
         time.sleep(2)
         pull_request = list_prs_for_hash(args, api, repo, commit_hash)
