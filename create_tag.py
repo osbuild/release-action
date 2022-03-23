@@ -116,6 +116,7 @@ def get_contributors(latest_tag):
     logging.debug("Collect contributors...")
     contributors = run_command(["git", "log", '--format="%an"', f"{latest_tag}..HEAD"])
     contributor_list = contributors.replace('"', '').split("\n")
+    contributor_list.pop() # Remove the author of the post release version bump commit
     names = ""
     for name in sorted(set(contributor_list)):
         if name != "":
