@@ -97,7 +97,7 @@ def get_pullrequest_infos(args, repo, hashes):
     summaries = []
 
     for i, commit_hash in enumerate(hashes):
-        print(f"Fetching PR for commit {i}/{len(hashes)} ({commit_hash})")
+        print(f"Fetching PR for commit {i+1}/{len(hashes)} ({commit_hash})")
         time.sleep(2)
         pull_request = list_prs_for_hash(args, api, repo, commit_hash)
         if pull_request is not None:
