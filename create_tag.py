@@ -146,7 +146,7 @@ def create_release_tag(args, repo, tag, latest_tag):
     summaries = get_pullrequest_infos(args, repo, hashes)
 
     tag = f'v{args.version}'
-    message = (f"CHANGES WITH {args.version}:\n\n"
+    message = (f"Changes with {args.version}\n\n"
             f"----------------\n"
             f"{summaries}\n\n"
             f"Contributions from: {contributors}\n\n"
