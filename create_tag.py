@@ -10,6 +10,7 @@ import time
 import logging
 from datetime import date
 from ghapi.all import GhApi
+from slack_sdk.webhook import WebhookClient
 
 
 class fg:  # pylint: disable=too-few-public-methods
@@ -51,6 +52,33 @@ def run_command(argv):
         ret = result.stderr.strip()
 
     return ret
+
+
+def slack_notify(message: str):
+    url = os.getenv('SLACK_WEBHOOK_URL')
+    github_server_url = os.getenv('GITHUB_SERVER_URL')
+    github_repository = os.getenv('GITHUB_REPOSITORY')
+    github_run_id = os.getenv('GITHUB_RUN_ID')
+    github_url = f"{github_server_url}/{github_repository}/actions/runs/{github_run_id}"
+
+    msg_ok(message)
+
+    if url:
+        webhook = WebhookClient(url)
+
+        response = webhook.send(
+            text="fallback",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"<{github_url}|release-bot>: {message}"
+                    }
+                }
+            ])
+        assert response.status_code == 200
+        assert response.body == "ok"
 
 
 def autoincrement_version(latest_tag):
@@ -140,7 +168,10 @@ def create_release_tag(args, repo, tag, latest_tag):
     logging.debug("\n".join(hashes))
 
     if len(hashes) <= 1: # Don't release when there are no changes
-        msg_info("No new commits have been pushed since the latest release (apart from the post release version bump) therefore skipping the tag.")
+        github_server_url = os.getenv('GITHUB_SERVER_URL')
+        github_repository = os.getenv('GITHUB_REPOSITORY')
+        url = f"{github_server_url}/{github_repository}/releases/{latest_tag}"
+        slack_notify(f":loudspeaker: The scheduled release of *{repo} {args.version}* is *skipped* as there are no changes since <{url}|{latest_tag}>.\nSee you in two weeks! :meow_wave:")
         sys.exit(0)
 
     summaries = get_pullrequest_infos(args, repo, hashes)
