@@ -107,7 +107,8 @@ def get_pullrequest_infos(args, repo, hashes):
                 msg = f"  * {pull_request.title} (#{pull_request.number})"
             summaries.append(msg)
 
-    summaries = list(dict.fromkeys(summaries)) # Deduplicate the list of pr summaries
+    # Deduplicate the list of pr summaries and sort it
+    summaries = sorted(list(dict.fromkeys(summaries)))
     msg_ok(f"Collected summaries from {len(summaries)} pull requests ({i} commits).")
     return "\n".join(summaries)
 
