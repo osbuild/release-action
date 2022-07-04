@@ -9,5 +9,5 @@ if [ -f "setup.py" ]; then
 fi
 
 if [ -f "osbuild/__init__.py" ]; then
-  sed -i "s|__version__ = \"$(VERSION)\"|__version__ = \"$(NEXT_VERSION)\"|" osbuild/__init__.py
+  sed -i -E "s/(__version__ = \")[0-9]+/\1$VERSION/" osbuild/__init__.py
 fi
