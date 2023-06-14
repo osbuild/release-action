@@ -11,6 +11,10 @@ inputs:
   email:
     description: "The GitHub user's email address"
     required: true
+  semver:
+    description: "Use semantic versioning instead of a single number"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -41,5 +45,10 @@ runs:
     - name: Create and push tag
       run: |
         cd ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}/
-        ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}"
+        if [[ "${{ inputs.SEMVER }}" == "true" ]]; then
+          VERSION_TYPE_OPTION="--semver"
+        else
+          VERSION_TYPE_OPTION=""
+        fi
+        ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}" $VERSION_TYPE_OPTION
       shell: bash
