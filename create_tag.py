@@ -37,13 +37,14 @@ def msg_ok(body):
     print(f"{fg.OK}{fg.BOLD}OK:{fg.RESET} {body}")
 
 
-def run_command(argv):
+def run_command(argv, check=False):
     """Run a shellcommand and return stdout"""
-    result = subprocess.run(  # pylint: disable=subprocess-run-check
+    result = subprocess.run(
         argv,
         capture_output=True,
         text=True,
-        encoding='utf-8')
+        encoding='utf-8',
+        check=check)
 
     if result.returncode == 0:
         ret = result.stdout.strip()
@@ -53,11 +54,15 @@ def run_command(argv):
     return ret
 
 
-def autoincrement_version(latest_tag):
+def autoincrement_version(latest_tag, semver=False):
     """Bump the version of the latest git tag by 1"""
     if latest_tag == "":
         msg_info("There are no tags yet in this repository.")
-        version = "1"
+        return "1.0.0" if semver else "1"
+
+    if semver:
+        major_version = int(latest_tag.replace("v", "").split(".")[0])
+        version = f"{major_version + 1}.0.0"
     elif "." in latest_tag:
         version = latest_tag.replace("v", "").split(".")[0] + "." + str(int(latest_tag[-1]) + 1)
     else:
@@ -165,31 +170,53 @@ def print_config(args, repo):
           f"  Component:     {repo}\n"
           f"  Version:       {args.version}\n"
           f"  Base branch:   {args.base}\n"
+          f"  Semantic ver.: {args.semver}\n"
           f"--------------------------------\n")
 
 
-def main():
-    """Main function"""
-    # Get some basic fallback/default values
-    repo = os.path.basename(os.getcwd())
-    latest_tag = run_command(['git', 'describe', '--tags', '--abbrev=0'])
-    version = autoincrement_version(latest_tag)
-
+def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--version",
-                        help=f"Set the version for the release (Default: {version})",
-                        default=version)
+                        help=f"Set the version for the release (by default, the latest tag will be auto-incremented)",
+                        default=None)
     parser.add_argument("-t", "--token", help=f"Set the GitHub token")
     parser.add_argument("-b", "--base",
                         help=f"Set the release branch (Default: 'main')",
                         default='main')
     parser.add_argument("-d", "--debug", help="Print lots of debugging statements", action="store_const",
                         dest="loglevel", const=logging.DEBUG, default=logging.INFO)
+    parser.add_argument("--semver",
+                        action="store_true",
+                        default=False,
+                        help="Use semantic versioning, instead of a simple autoincrement. Note that only the fist" + \
+                        " number will be incremented and following numbers will be reset to zero.")
+    parser.add_argument("--dry-run",
+                        action="store_true",
+                        default=False,
+                        help="Don't actually create the tag, just print the values that would be used.")
+    return parser
+
+def main():
+    """Main function"""
+    parser = get_parser()
     args = parser.parse_args()
 
     logging.basicConfig(level=args.loglevel, format='%(asctime)s %(message)s', datefmt='%Y/%m/%d/ %H:%M:%S')
 
+    # Get some basic fallback/default values
+    repo = os.path.basename(os.getcwd())
+    if args.version is None:
+        try:
+            latest_tag = run_command(['git', 'describe', '--tags', '--abbrev=0'], check=True)
+        except subprocess.CalledProcessError:
+            latest_tag = ""
+        args.version = autoincrement_version(latest_tag, args.semver)
+
     print_config(args, repo)
+
+    if args.dry_run:
+        logging.info("Dry run, exiting...")
+        sys.exit(0)
 
     tag = f'v{args.version}'
     logging.debug(f"Current release: {latest_tag}\nNew release: {args.version}\nTag name: {tag}")
