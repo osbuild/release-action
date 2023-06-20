@@ -188,7 +188,7 @@ def get_parser():
     parser.add_argument("--semver",
                         action="store_true",
                         default=False,
-                        help="Use semantic versioning, instead of a simple autoincrement. Note that only the fist" + \
+                        help="Use semantic versioning, instead of a simple autoincrement. Note that only the first" + \
                         " number will be incremented and following numbers will be reset to zero.")
     parser.add_argument("--dry-run",
                         action="store_true",
