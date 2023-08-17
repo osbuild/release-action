@@ -15,6 +15,10 @@ inputs:
     description: "Use semantic versioning instead of a single number"
     required: false
     default: "false"
+  semver_bump_type:
+    description: "The type of semantic versioning bump to perform. Can be 'major', 'minor', or 'patch'."
+    required: false
+    default: "major"
 
 runs:
   using: "composite"
@@ -49,6 +53,9 @@ runs:
           VERSION_TYPE_OPTION="--semver"
         else
           VERSION_TYPE_OPTION=""
+        fi
+        if [[ "${{ inputs.SEMVER_BUMP_TYPE }}" != "" ]]; then
+          VERSION_TYPE_OPTION="$VERSION_TYPE_OPTION --semver-bump-type ${{ inputs.SEMVER_BUMP_TYPE }}"
         fi
         ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}" $VERSION_TYPE_OPTION
       shell: bash
