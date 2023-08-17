@@ -54,15 +54,27 @@ def run_command(argv, check=False):
     return ret
 
 
-def autoincrement_version(latest_tag, semver=False):
+def autoincrement_version(latest_tag, semver=False, semver_bump_type="major"):
     """Bump the version of the latest git tag by 1"""
     if latest_tag == "":
         msg_info("There are no tags yet in this repository.")
-        return "1.0.0" if semver else "1"
+        if semver:
+            if semver_bump_type == "major":
+                return "1.0.0"
+            elif semver_bump_type == "minor":
+                return "0.1.0"
+            elif semver_bump_type == "patch":
+                return "0.0.1"
+        return "1"
 
     if semver:
-        major_version = int(latest_tag.replace("v", "").split(".")[0])
-        version = f"{major_version + 1}.0.0"
+        version_parts = [int(x) for x in latest_tag.replace("v", "").split(".")]
+        if semver_bump_type == "minor":
+            version = f"{version_parts[0]}.{version_parts[1] + 1}.0"
+        elif semver_bump_type == "patch":
+            version = f"{version_parts[0]}.{version_parts[1]}.{version_parts[2] + 1}"
+        else:
+            version = f"{version_parts[0] + 1}.0.0"
     elif "." in latest_tag:
         version = latest_tag.replace("v", "").split(".")[0] + "." + str(int(latest_tag[-1]) + 1)
     else:
@@ -192,6 +204,11 @@ def get_parser():
                         default=False,
                         help="Use semantic versioning, instead of a simple autoincrement. Note that only the first" + \
                         " number will be incremented and following numbers will be reset to zero.")
+    parser.add_argument("--semver-bump-type",
+                        action="store",
+                        default="major",
+                        choices=["major", "minor", "patch"],
+                        help="When using semantic versioning, set the type of bump to perform.")
     parser.add_argument("--dry-run",
                         action="store_true",
                         default=False,
@@ -212,7 +229,7 @@ def main():
             latest_tag = run_command(['git', 'describe', '--tags', '--abbrev=0'], check=True)
         except subprocess.CalledProcessError:
             latest_tag = ""
-        args.version = autoincrement_version(latest_tag, args.semver)
+        args.version = autoincrement_version(latest_tag, args.semver, args.semver_bump_type)
 
     print_config(args, repo)
 
