@@ -172,6 +172,10 @@ def create_release_tag(args, repo, tag, latest_tag):
             f"Contributions from: {contributors}\n\n"
             f"— Somewhere on the Internet, {today.strftime('%Y-%m-%d')}")
 
+    if args.dry_run:
+        msg_info(f"DRY_RUN: Would create a tag '{tag}' with message:\n{message}")
+        return
+
     res = run_command(['git', 'tag', '-m', message, tag, 'HEAD'])
     logging.debug(res)
     msg_ok(f"Created tag '{tag}' with message:\n{message}")
@@ -218,6 +222,7 @@ def get_parser():
 def main():
     """Main function"""
     parser = get_parser()
+    global args
     args = parser.parse_args()
 
     logging.basicConfig(level=args.loglevel, format='%(asctime)s %(message)s', datefmt='%Y/%m/%d/ %H:%M:%S')
@@ -233,15 +238,16 @@ def main():
 
     print_config(args, repo)
 
-    if args.dry_run:
-        logging.info("Dry run, exiting...")
-        sys.exit(0)
-
     tag = f'v{args.version}'
     logging.debug(f"Current release: {latest_tag}\nNew release: {args.version}\nTag name: {tag}")
 
     # Create a release tag
     create_release_tag(args, repo, tag, latest_tag)
+
+    # Don't push the tag if we're doing a dry run
+    if args.dry_run:
+        msg_info(f"DRY_RUN: Would push a tag {tag} to branch {args.base}")
+        sys.exit(0)
 
     # Push the tag
     res = run_command(['git', 'push', 'origin', tag])
