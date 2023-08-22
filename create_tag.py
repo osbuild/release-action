@@ -153,11 +153,11 @@ def create_release_tag(args, repo, tag, latest_tag):
     contributors = get_contributors(latest_tag)
 
     summaries = ""
-    hashes = run_command(['git', 'log', '--format=%H', f'{latest_tag}..HEAD']).split("\n")
+    hashes = run_command(['git', 'log', '--format=%H', f'{latest_tag}..HEAD']).splitlines()
     msg_info(f"Found {len(hashes)} commits since {latest_tag} in {args.base}:")
     logging.debug("\n".join(hashes))
 
-    subjects = run_command(['git', 'log', '--format=%s', f'{latest_tag}..HEAD']).split("\n")
+    subjects = run_command(['git', 'log', '--format=%s', f'{latest_tag}..HEAD']).splitlines()
     # Don't release when there are no changes
     if (len(hashes) < 1) or (len(subjects) == 1 and subjects[0] == "Post release version bump"):
         msg_info("No new commits have been pushed since the latest release (apart from the post release version bump) therefore skipping the tag.")
