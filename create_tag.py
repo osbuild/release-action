@@ -185,11 +185,13 @@ def print_config(args, repo):
     """Print the values used for the release playbook"""
     print("\n--------------------------------\n"
           f"{fg.BOLD}Release:{fg.RESET}\n"
-          f"  Component:     {repo}\n"
-          f"  Version:       {args.version}\n"
-          f"  Base branch:   {args.base}\n"
-          f"  Semantic ver.: {args.semver}\n"
-          f"--------------------------------\n")
+          f"  Component:        {repo}\n"
+          f"  Version:          {args.version}\n"
+          f"  Base branch:      {args.base}\n"
+          f"  Semantic ver.:    {args.semver}")
+    if args.semver:
+        print(f"  Semver bump type: {args.semver_bump_type}")
+    print("--------------------------------\n")
 
 
 def get_parser():
