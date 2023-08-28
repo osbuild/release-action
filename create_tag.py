@@ -10,6 +10,7 @@ import time
 import logging
 from datetime import date
 from ghapi.all import GhApi
+from packaging.version import Version
 
 
 class fg:  # pylint: disable=too-few-public-methods
@@ -54,10 +55,12 @@ def run_command(argv, check=False):
     return ret
 
 
-def autoincrement_version(latest_tag, semver=False, semver_bump_type="major"):
-    """Bump the version of the latest git tag by 1"""
-    if latest_tag == "":
-        msg_info("There are no tags yet in this repository.")
+def autoincrement_version(latest_version, semver=False, semver_bump_type="major"):
+    """
+    Bumps the latest_version by one, depending on the type of versioning used.
+    Returns the new version as a string.
+    """
+    if latest_version is None:
         if semver:
             if semver_bump_type == "major":
                 return "1.0.0"
@@ -67,19 +70,19 @@ def autoincrement_version(latest_tag, semver=False, semver_bump_type="major"):
                 return "0.0.1"
         return "1"
 
+    version = Version(latest_version)
     if semver:
-        version_parts = [int(x) for x in latest_tag.replace("v", "").split(".")]
         if semver_bump_type == "minor":
-            version = f"{version_parts[0]}.{version_parts[1] + 1}.0"
+            return f"{version.major}.{version.minor + 1}.0"
         elif semver_bump_type == "patch":
-            version = f"{version_parts[0]}.{version_parts[1]}.{version_parts[2] + 1}"
+            return f"{version.major}.{version.minor}.{version.micro + 1}"
         else:
-            version = f"{version_parts[0] + 1}.0.0"
-    elif "." in latest_tag:
-        version = latest_tag.replace("v", "").split(".")[0] + "." + str(int(latest_tag[-1]) + 1)
+            return f"{version.major + 1}.0.0"
+    # handle simple dot-releases by bumping the last number
+    elif len(version.release) > 1:
+        return ".".join([str(x) for x in version.release[:len(version.release) - 1]] + [str(version.release[len(version.release) - 1] + 1)])
     else:
-        version = int(latest_tag.replace("v", "")) + 1
-    return version
+        return str(version.major + 1)
 
 
 def list_prs_for_hash(args, api, repo, commit_hash):
@@ -232,16 +235,25 @@ def main():
     # Get some basic fallback/default values
     repo = os.path.basename(os.getcwd())
     if args.version is None:
+        latest_version = None
         try:
-            latest_tag = run_command(['git', 'describe', '--tags', '--abbrev=0'], check=True)
-        except subprocess.CalledProcessError:
-            latest_tag = ""
-        args.version = autoincrement_version(latest_tag, args.semver, args.semver_bump_type)
+            # list all tags reachable from the current commit.
+            tags = run_command(['git', 'tag', '-l', '--merged'], check=True).splitlines()
+            if tags:
+                versions = [Version(tag) for tag in tags]
+                versions.sort()
+                latest_version = str(versions[-1])
+        except subprocess.CalledProcessError as e:
+            logging.error("Failed to get the list of tags from the repository: %s", e.stderr)
 
-    print_config(args, repo)
+        args.version = autoincrement_version(latest_version, args.semver, args.semver_bump_type)
 
     tag = f'v{args.version}'
-    logging.debug(f"Current release: {latest_tag}\nNew release: {args.version}\nTag name: {tag}")
+    latest_tag = f"v{latest_version}" if latest_version is not None else ""
+    logging.info("Current release: %s (tag: %s)", latest_version, latest_tag)
+    logging.info("New release: %s (tag: %s)", args.version, tag)
+
+    print_config(args, repo)
 
     # Create a release tag
     create_release_tag(args, repo, tag, latest_tag)
