@@ -169,27 +169,10 @@ def get_pullrequest_infos(args, repo, hashes):
     return "\n".join(summaries)
 
 
-def get_contributors(latest_tag):
-    """Collect all contributors to a release based on the git history"""
-    logging.debug("Collect contributors...")
-    contributors = run_command(["git", "log", '--format="%an"', f"{latest_tag}..HEAD"])
-    contributor_list = contributors.replace('"', '').split("\n")
-    contributor_list.pop() # Remove the author of the post release version bump commit
-    names = ""
-    for name in sorted(set(contributor_list)):
-        if name != "":
-            names += f"{name}, "
-
-    logging.debug(f"List of contributors:\n{names[:-2]}")
-
-    return names[:-2]
-
-
 def create_release_tag(args, repo, tag, latest_tag):
     """Create a release tag"""
     logging.debug("Preparing tag...")
     today = date.today()
-    contributors = get_contributors(latest_tag)
 
     summaries = ""
     hashes = run_command(['git', 'log', '--format=%H', f'{latest_tag}..HEAD']).splitlines()
@@ -208,7 +191,6 @@ def create_release_tag(args, repo, tag, latest_tag):
     message = (f"Changes with {args.version}\n\n"
             f"----------------\n"
             f"{summaries}\n\n"
-            f"Contributions from: {contributors}\n\n"
             f"— Somewhere on the Internet, {today.strftime('%Y-%m-%d')}")
 
     if args.dry_run:
