@@ -85,6 +85,36 @@ def autoincrement_version(latest_version, semver=False, semver_bump_type="major"
         return str(version.major + 1)
 
 
+def get_full_username(api, username):
+    """
+    Return the full name of a github user
+    """
+    user = api.users.get_by_username(username=username)
+
+    return user['name']
+
+
+def list_reviewers_for_pr(api, repo, pr_number):
+    """
+    Return all reviewers that approved a pull request
+    """
+    try:
+        res = api.pulls.list_reviews(owner="osbuild",repo=repo, pull_number=pr_number, per_page=20)
+    except:
+        msg_info(f"Couldn't get reviewers for PR #{pr_number}.")
+        res = None
+
+    reviewers = []
+
+    if res is not None:
+        for item in res:
+            if item['state'] == "APPROVED":
+                reviewer = get_full_username(api, item['user']['login'])
+                reviewers.append(reviewer)
+
+    return sorted(set(reviewers))
+
+
 def list_prs_for_hash(args, api, repo, commit_hash):
     """Get pull request for a given commit hash"""
     query = f'{commit_hash} type:pr is:merged base:{args.base} repo:osbuild/{repo}'
@@ -94,20 +124,24 @@ def list_prs_for_hash(args, api, repo, commit_hash):
         msg_info(f"Couldn't get PR infos for {commit_hash}.")
         res = None
 
+    pull_request = None
+    author = "Nobody"
+    reviewers = ["Nobody"]
+
     if res is not None:
         items = res["items"]
 
         if len(items) == 1:
-            ret = items[0]
+            pull_request = items[0]
+            username = pull_request.user['login']
+            author = get_full_username(api, username)
+            reviewers = list_reviewers_for_pr(api, repo, pull_request.number)
         else:
             msg_info(f"There are {len(items)} pull requests associated with {commit_hash} - skipping...")
             for item in items:
                 msg_info(f"{item.html_url}")
-            ret = None
-    else:
-        ret = None
 
-    return ret
+    return pull_request, author, reviewers
 
 
 def get_pullrequest_infos(args, repo, hashes):
@@ -119,12 +153,14 @@ def get_pullrequest_infos(args, repo, hashes):
     for i, commit_hash in enumerate(hashes):
         print(f"Fetching PR for commit {i+1}/{len(hashes)} ({commit_hash})")
         time.sleep(2)
-        pull_request = list_prs_for_hash(args, api, repo, commit_hash)
+        pull_request, author, reviewers = list_prs_for_hash(args, api, repo, commit_hash)
         if pull_request is not None:
             if repo == "cockpit-composer":
-                msg = f"- {pull_request.title} (#{pull_request.number})"
+                msg = (f"- {pull_request.title} (#{pull_request.number})\n"
+                       f"  - Author: {author}, Reviewers: {', '.join(reviewers)})")
             else:
-                msg = f"  * {pull_request.title} (#{pull_request.number})"
+                msg = (f"  * {pull_request.title} (#{pull_request.number})\n"
+                       f"    * Author: {author}, Reviewers: {', '.join(reviewers)}")
             summaries.append(msg)
 
     # Deduplicate the list of pr summaries and sort it
