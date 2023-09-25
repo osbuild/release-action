@@ -110,7 +110,13 @@ def list_reviewers_for_pr(api, repo, pr_number):
         for item in res:
             if item['state'] == "APPROVED":
                 reviewer = get_full_username(api, item['user']['login'])
+                if reviewer is None:
+                    msg_info(f"Couldn't get full name for {item['user']['login']}, using the username instead.")
+                    reviewer = item['user']['login']
                 reviewers.append(reviewer)
+
+    if len(reviewers) == 0:
+        reviewers.append("Nobody")
 
     return sorted(set(reviewers))
 
@@ -135,6 +141,9 @@ def list_prs_for_hash(args, api, repo, commit_hash):
             pull_request = items[0]
             username = pull_request.user['login']
             author = get_full_username(api, username)
+            if author is None:
+                msg_info(f"Couldn't get full name for {username}, using the username instead.")
+                author = username
             reviewers = list_reviewers_for_pr(api, repo, pull_request.number)
         else:
             msg_info(f"There are {len(items)} pull requests associated with {commit_hash} - skipping...")
@@ -155,12 +164,18 @@ def get_pullrequest_infos(args, repo, hashes):
         time.sleep(2)
         pull_request, author, reviewers = list_prs_for_hash(args, api, repo, commit_hash)
         if pull_request is not None:
+            pr_title_line = f"{pull_request.title} (#{pull_request.number})"
+            author_reviewers_line = f"Author: {author}, Reviewers: {', '.join(reviewers)}"
+
+            if author == "dependabot[bot]" and reviewers == ["github-actions[bot]"]:
+                author_reviewers_line = "Automated dependency update"
+
             if repo == "cockpit-composer":
-                msg = (f"- {pull_request.title} (#{pull_request.number})\n"
-                       f"  - Author: {author}, Reviewers: {', '.join(reviewers)})")
+                msg = (f"- {pr_title_line}\n"
+                       f"  - {author_reviewers_line}")
             else:
-                msg = (f"  * {pull_request.title} (#{pull_request.number})\n"
-                       f"    * Author: {author}, Reviewers: {', '.join(reviewers)}")
+                msg = (f"  * {pr_title_line}\n"
+                       f"    * {author_reviewers_line}")
             summaries.append(msg)
 
     # Deduplicate the list of pr summaries and sort it
