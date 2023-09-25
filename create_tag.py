@@ -112,6 +112,9 @@ def list_reviewers_for_pr(api, repo, pr_number):
                 reviewer = get_full_username(api, item['user']['login'])
                 reviewers.append(reviewer)
 
+    if reviewers is None:
+        reviewers = ["Nobody"]
+
     return sorted(set(reviewers))
 
 
