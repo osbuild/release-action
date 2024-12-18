@@ -29,7 +29,7 @@ runs:
 
     - name: Create GitHub release
       # https://github.com/marketplace/actions/create-release
-      uses: ncipollo/release-action@v1.8.10
+      uses: ncipollo/release-action@v1.14.0
       with:
         name: "${{  env.release_version }}"
         token: "${{ inputs.TOKEN }}"
