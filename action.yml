@@ -8,6 +8,10 @@ inputs:
   slack_bot_token:
     description: "A Slack bot OAuth token"
     required: true
+  build_release_artifacts:
+    description: "Run `make release_artifacts` and expect results in `release_artifacts/`"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -27,6 +31,11 @@ runs:
       run: ${{ github.action_path }}/release-info.sh
       shell: bash
 
+    - name: Build additional release artifacts (optionally)
+      run: make release_artifacts
+      shell: bash
+      if: ${{ inputs.build_release_artifacts == 'true' }}
+
     - name: Create GitHub release
       # https://github.com/marketplace/actions/create-release
       uses: ncipollo/release-action@v1.14.0
@@ -34,6 +43,7 @@ runs:
         name: "${{  env.release_version }}"
         token: "${{ inputs.TOKEN }}"
         bodyFile: "release.md"
+        artifacts: "release_artifacts/*"
 
     - name: Bump version
       run: ${{ github.action_path }}/bump-version.sh "${{  env.release_version }}"
