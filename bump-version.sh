@@ -14,7 +14,7 @@ else
 fi
 
 
-find -name "*osbuild*.spec" -or -name "cockpit-*.spec" \
+find -name "*osbuild*.spec" -or -name "cockpit-*.spec" -or -name "image-builder*.spec" \
     | xargs sed -i -E "s/(Version:\\s+)[0-9]+/\1$VERSION/"
 
 if [ -f "setup.py" ]; then
