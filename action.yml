@@ -43,7 +43,7 @@ runs:
         name: "${{  env.release_version }}"
         token: "${{ inputs.TOKEN }}"
         bodyFile: "release.md"
-        artifacts: "build_artifacts/*"
+        artifacts: "release_artifacts/*"
 
     - name: Bump version
       run: ${{ github.action_path }}/bump-version.sh "${{  env.release_version }}"
