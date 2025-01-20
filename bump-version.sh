@@ -2,7 +2,8 @@
 
 VERSION=$(( $1 + 1 ))
 
-sed -i -E "s/(Version:\\s+)[0-9]+/\1$VERSION/" *osbuild*.spec
+find -name "*osbuild*.spec" -or -name "cockpit-*.spec" \
+    | xargs sed -i -E "s/(Version:\\s+)[0-9]+/\1$VERSION/"
 
 if [ -f "setup.py" ]; then
   sed -i -E "s/(version=\")[0-9]+/\1$VERSION/" setup.py
