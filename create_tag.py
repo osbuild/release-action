@@ -255,6 +255,9 @@ def get_parser():
                         action="store_true",
                         default=False,
                         help="Don't actually create the tag, just print the values that would be used.")
+    parser.add_argument("--remote",
+                        default="origin",
+                        help="Push the tag to this remote (default: 'origin').")
     return parser
 
 def main():
@@ -298,7 +301,7 @@ def main():
         sys.exit(0)
 
     # Push the tag
-    res = run_command(['git', 'push', 'origin', tag])
+    res = run_command(['git', 'push', args.remote, tag])
     logging.debug(res)
     msg_ok(f"Pushed tag '{tag}' to branch '{args.base}'")
 
