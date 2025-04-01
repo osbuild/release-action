@@ -54,6 +54,7 @@ runs:
       env:
         BASE_BRANCH: ${{ env.GITHUB_REF_NAME }}
         VERSION: ${{ inputs.VERSION }}
+        SEMVER_BUMP_TYPE: ${{ inputs.SEMVER_BUMP_TYPE }}
       run: |
         cd ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}/
         if [[ "${{ inputs.SEMVER }}" == "true" ]]; then
@@ -61,7 +62,7 @@ runs:
         else
           VERSION_TYPE_OPTION=""
         fi
-        if [[ "${{ inputs.SEMVER_BUMP_TYPE }}" != "" ]]; then
+        if [[ -n "${{ env.SEMVER_BUMP_TYPE }}" ]]; then
           VERSION_TYPE_OPTION="$VERSION_TYPE_OPTION --semver-bump-type ${{ inputs.SEMVER_BUMP_TYPE }}"
         fi
         if [[ -n "${{ env.BASE_BRANCH }}" ]]; then
