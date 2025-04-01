@@ -64,10 +64,10 @@ runs:
         if [[ "${{ inputs.SEMVER_BUMP_TYPE }}" != "" ]]; then
           VERSION_TYPE_OPTION="$VERSION_TYPE_OPTION --semver-bump-type ${{ inputs.SEMVER_BUMP_TYPE }}"
         fi
-        if [[ -n ${{ env.BASE_BRANCH }} ]]; then
+        if [[ -n "${{ env.BASE_BRANCH }}" ]]; then
           BASE_BRANCH_OPTION="--base ${{ env.BASE_BRANCH }}"
         fi
-        if [[ -n ${{ env.VERSION }} ]]; then
+        if [[ -n "${{ env.VERSION }}" ]]; then
           VERSION_OPTION="--version ${{ env.VERSION }}"
         fi
         ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}" $VERSION_TYPE_OPTION $BASE_BRANCH_OPTION $VERSION_OPTION
