@@ -47,6 +47,8 @@ runs:
       shell: bash
 
     - name: Create and push tag
+      env:
+        BASE_BRANCH: ${{ env.GITHUB_REF_NAME }}
       run: |
         cd ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}/
         if [[ "${{ inputs.SEMVER }}" == "true" ]]; then
@@ -57,5 +59,8 @@ runs:
         if [[ "${{ inputs.SEMVER_BUMP_TYPE }}" != "" ]]; then
           VERSION_TYPE_OPTION="$VERSION_TYPE_OPTION --semver-bump-type ${{ inputs.SEMVER_BUMP_TYPE }}"
         fi
-        ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}" $VERSION_TYPE_OPTION
+        if [[ -n ${{ env.BASE_BRANCH }} ]]; then
+          BASE_BRANCH_OPTION="--base ${{ env.BASE_BRANCH }}"
+        fi
+        ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}" $VERSION_TYPE_OPTION $BASE_BRANCH_OPTION
       shell: bash
