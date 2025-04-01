@@ -1,6 +1,18 @@
 #!/bin/bash
 
-VERSION=$(( $1 + 1 ))
+if [ -z "$1" ]; then
+  echo "Usage: $0 <version>"
+  exit 1
+fi
+
+if [[ "$1" =~ \. ]]; then
+  # If there is a "dot" in the version number, we need to bump the last number
+  VERSION=$(echo "$1" | sed -E 's/(.*\.)([0-9]+)$/echo "\1$((\2+1))"/e')
+else
+  # If there is no "dot" in the version number, we simply increment the version number
+  VERSION=$(( $1 + 1 ))
+fi
+
 
 find -name "*osbuild*.spec" -or -name "cockpit-*.spec" \
     | xargs sed -i -E "s/(Version:\\s+)[0-9]+/\1$VERSION/"
