@@ -19,6 +19,10 @@ inputs:
     description: "The type of semantic versioning bump to perform. Can be 'major', 'minor', or 'patch'."
     required: false
     default: "major"
+  version:
+    description: "The version to set. If not provided, the version will be determined automatically."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -49,6 +53,7 @@ runs:
     - name: Create and push tag
       env:
         BASE_BRANCH: ${{ env.GITHUB_REF_NAME }}
+        VERSION: ${{ inputs.VERSION }}
       run: |
         cd ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}/
         if [[ "${{ inputs.SEMVER }}" == "true" ]]; then
@@ -62,5 +67,8 @@ runs:
         if [[ -n ${{ env.BASE_BRANCH }} ]]; then
           BASE_BRANCH_OPTION="--base ${{ env.BASE_BRANCH }}"
         fi
-        ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}" $VERSION_TYPE_OPTION $BASE_BRANCH_OPTION
+        if [[ -n ${{ env.VERSION }} ]]; then
+          VERSION_OPTION="--version ${{ env.VERSION }}"
+        fi
+        ${{ github.action_path }}/create_tag.py --token "${{ inputs.TOKEN }}" $VERSION_TYPE_OPTION $BASE_BRANCH_OPTION $VERSION_OPTION
       shell: bash
