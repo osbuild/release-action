@@ -297,13 +297,13 @@ def main():
 
     # Don't push the tag if we're doing a dry run
     if args.dry_run:
-        msg_info(f"DRY_RUN: Would push a tag {tag} to branch {args.base}")
+        msg_info(f"DRY_RUN: Would push a tag {tag} to remote {args.remote}")
         sys.exit(0)
 
     # Push the tag
     res = run_command(['git', 'push', args.remote, tag])
     logging.debug(res)
-    msg_ok(f"Pushed tag '{tag}' to branch '{args.base}'")
+    msg_ok(f"Pushed tag '{tag}' to remote '{args.remote}'")
 
 
 if __name__ == "__main__":
