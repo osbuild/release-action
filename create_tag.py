@@ -267,18 +267,19 @@ def main():
 
     # Get some basic fallback/default values
     repo = os.path.basename(os.getcwd())
-    if args.version is None:
-        latest_version = None
-        try:
-            # list all tags reachable from the current commit.
-            tags = run_command(['git', 'tag', '-l', '--merged'], check=True).splitlines()
-            if tags:
-                versions = [Version(tag) for tag in tags]
-                versions.sort()
-                latest_version = str(versions[-1])
-        except subprocess.CalledProcessError as e:
-            logging.error("Failed to get the list of tags from the repository: %s", e.stderr)
 
+    latest_version = None
+    try:
+        # list all tags reachable from the current commit.
+        tags = run_command(['git', 'tag', '-l', '--merged'], check=True).splitlines()
+        if tags:
+            versions = [Version(tag) for tag in tags]
+            versions.sort()
+            latest_version = str(versions[-1])
+    except subprocess.CalledProcessError as e:
+        logging.error("Failed to get the list of tags from the repository: %s", e.stderr)
+
+    if args.version is None:
         args.version = autoincrement_version(latest_version, args.semver, args.semver_bump_type)
 
     tag = f'v{args.version}'
