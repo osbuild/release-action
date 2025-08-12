@@ -174,8 +174,8 @@ def get_pullrequest_infos(args, repo, hashes):
                 msg = (f"- {pr_title_line}\n"
                        f"  - {author_reviewers_line}")
             else:
-                msg = (f"  * {pr_title_line}\n"
-                       f"    * {author_reviewers_line}")
+                msg = (f"  - {pr_title_line}\n"
+                       f"    - {author_reviewers_line}")
             summaries.append(msg)
 
     # Deduplicate the list of pr summaries and sort it
