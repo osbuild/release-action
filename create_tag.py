@@ -170,12 +170,9 @@ def get_pullrequest_infos(args, repo, hashes):
             if author == "dependabot[bot]" and reviewers == ["github-actions[bot]"]:
                 author_reviewers_line = "Automated dependency update"
 
-            if repo == "cockpit-composer":
-                msg = (f"- {pr_title_line}\n"
-                       f"  - {author_reviewers_line}")
-            else:
-                msg = (f"  - {pr_title_line}\n"
-                       f"    - {author_reviewers_line}")
+            msg = (f"  - {pr_title_line}\n"
+                   f"    - {author_reviewers_line}")
+
             summaries.append(msg)
 
     # Deduplicate the list of pr summaries and sort it
