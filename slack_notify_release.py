@@ -102,7 +102,7 @@ def slack_notify_with_thread(
             thread_response = client.chat_postMessage(
                 channel=channel_id,
                 thread_ts=message_ts,
-                text=formatted_thread_message
+                markdown_text=formatted_thread_message
             )
             print(f"Posted threaded message: {thread_response['ts']}")
 
