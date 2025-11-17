@@ -37,6 +37,9 @@ def format_changelog_for_slack(changelog: str) -> str:
     # Convert markdown list items (starting with * ) to Slack format (starting with - )
     slack_changelog = re.sub(r'^(\s*)\*\s+', r'\1- ', slack_changelog, flags=re.MULTILINE)
 
+    # Convert EM-dash "footer" to italic
+    slack_changelog = re.sub(r'^(—\s+.+)$', r'_\1_', slack_changelog, flags=re.MULTILINE)
+
     return slack_changelog
 
 
