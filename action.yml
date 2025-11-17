@@ -13,6 +13,9 @@ inputs:
     required: false
     default: 'false'
 
+env:
+  SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
+
 runs:
   using: "composite"
   steps:
@@ -73,5 +76,5 @@ runs:
           --version "${{ env.release_version }}" \
           --release-notes-file "release.md" \
           --slack-bot-token "${{ inputs.slack_bot_token }}" \
-          --slack-channel-id "${{ vars.SLACK_CHANNEL_ID }}"
+          --slack-channel-id "${{ env.SLACK_CHANNEL_ID }}"
       shell: bash
