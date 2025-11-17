@@ -31,7 +31,7 @@ def format_changelog_for_slack(changelog: str) -> str:
     slack_changelog = re.sub(r'^#{1,6}\s+(.+)$', r'*\1*', slack_changelog, flags=re.MULTILINE)
 
     # Convert markdown list items (starting with * ) to Slack format (starting with - )
-    slack_changelog = re.sub(r'^\s*\*\s+', '  - ', slack_changelog, flags=re.MULTILINE)
+    slack_changelog = re.sub(r'^(\s*)\*\s+', r'\1- ', slack_changelog, flags=re.MULTILINE)
 
     return slack_changelog
 
