@@ -28,11 +28,11 @@ def format_changelog_for_slack(changelog: str) -> str:
 
     # Convert #### headers to *bold* (Slack doesn't have headers)
     # Use ^ anchor with MULTILINE to match headers at line start
-    slack_changelog = re.sub(r'^#{1,6}\s+(.+)$', r'*\1*', slack_changelog, flags=re.MULTILINE)
+    slack_changelog = re.sub(r'^#{1,6}\s+(.+)$', r'**\1**', slack_changelog, flags=re.MULTILINE)
 
     # Convert Text with underlined '-{4,}' headers to *bold* (Slack doesn't have headers)
     # Use ^ anchor with MULTILINE to match headers at line start
-    slack_changelog = re.sub(r'^(.+)\n-{4,}$', r'*\1*', slack_changelog, flags=re.MULTILINE)
+    slack_changelog = re.sub(r'^(.+)\n-{4,}$', r'**\1**', slack_changelog, flags=re.MULTILINE)
 
     # Convert markdown list items (starting with * ) to Slack format (starting with - )
     slack_changelog = re.sub(r'^(\s*)\*\s+', r'\1- ', slack_changelog, flags=re.MULTILINE)
