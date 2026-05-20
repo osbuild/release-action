@@ -3,6 +3,7 @@
 """Release bot"""
 
 import argparse
+import re
 import subprocess
 import sys
 import os
@@ -181,6 +182,65 @@ def get_pullrequest_infos(args, repo, hashes):
     return "\n".join(summaries)
 
 
+def get_images_version_from_gomod(ref):
+    """
+    Parse the osbuild/images version from go.mod at a given git ref.
+    Returns a Version object, or None if not found.
+    """
+    gomod = run_command(['git', 'show', f'{ref}:go.mod'])
+    if not gomod or gomod.startswith('fatal:'):
+        return None
+
+    match = re.search(r'github\.com/osbuild/images\s+v(\S+)', gomod)
+    if not match:
+        return None
+
+    try:
+        return Version(match.group(1))
+    except Exception:
+        msg_info(f"Could not parse images version from go.mod at {ref}: {match.group(1)}")
+        return None
+
+
+def fetch_images_changelogs(args, old_version, new_version):
+    """
+    Fetch annotated tag messages from osbuild/images for all releases
+    in the range (old_version, new_version] and return a single combined
+    list of PR entries.
+    """
+    api = GhApi(repo="images", owner='osbuild', token=args.token)
+
+    old_minor = old_version.minor
+    new_minor = new_version.minor
+    major = new_version.major
+
+    all_entries = []
+    for minor in range(old_minor + 1, new_minor + 1):
+        version_tag = f"v{major}.{minor}.0"
+        msg_info(f"Fetching images changelog for {version_tag}...")
+        time.sleep(1)
+        try:
+            ref = api.git.get_ref(ref=f"tags/{version_tag}")
+            tag_obj = api.git.get_tag(tag_sha=ref.object.sha)
+            tag_message = tag_obj.message
+
+            current_entry = None
+            for line in tag_message.strip().splitlines():
+                if line.startswith("  - "):
+                    if current_entry is not None:
+                        all_entries.append(current_entry)
+                    current_entry = line
+                elif line.startswith("    - ") and current_entry is not None:
+                    current_entry += "\n" + line
+            if current_entry is not None:
+                all_entries.append(current_entry)
+        except Exception as e:
+            msg_info(f"Could not fetch changelog for images {version_tag}: {e}")
+
+    all_entries = sorted(set(all_entries))
+    return "\n".join(all_entries)
+
+
 def create_release_tag(args, repo, tag, latest_tag):
     """Create a release tag"""
     logging.debug("Preparing tag...")
@@ -199,10 +259,24 @@ def create_release_tag(args, repo, tag, latest_tag):
 
     summaries = get_pullrequest_infos(args, repo, hashes)
 
+    images_section = ""
+    if latest_tag:
+        old_images = get_images_version_from_gomod(latest_tag)
+        new_images = get_images_version_from_gomod("HEAD")
+        if old_images and new_images and old_images != new_images:
+            msg_info(f"osbuild/images changed: v{old_images} -> v{new_images}")
+            images_changelog = fetch_images_changelogs(args, old_images, new_images)
+            if images_changelog:
+                images_section = (f"\n\nosbuild/images changes (v{old_images} -> v{new_images}):\n\n"
+                                  f"{images_changelog}")
+        elif not old_images and not new_images:
+            logging.debug("No osbuild/images dependency found in go.mod, skipping changelog expansion.")
+
     tag = f'v{args.version}'
     message = (f"Changes with {args.version}\n\n"
             f"----------------\n"
-            f"{summaries}\n\n"
+            f"{summaries}"
+            f"{images_section}\n\n"
             f"— Somewhere on the Internet, {today.strftime('%Y-%m-%d')}")
 
     if args.dry_run:
@@ -273,9 +347,15 @@ def main():
         # list all tags reachable from the current commit.
         tags = run_command(['git', 'tag', '-l', '--merged'], check=True).splitlines()
         if tags:
-            versions = [Version(tag) for tag in tags]
+            versions = []
+            for tag in tags:
+                try:
+                    versions.append(Version(tag))
+                except Exception:
+                    logging.debug("Skipping invalid tag: %s", tag)
             versions.sort()
-            latest_version = str(versions[-1])
+            if versions:
+                latest_version = str(versions[-1])
     except subprocess.CalledProcessError as e:
         logging.error("Failed to get the list of tags from the repository: %s", e.stderr)
 
