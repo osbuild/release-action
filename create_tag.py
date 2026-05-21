@@ -8,12 +8,15 @@ import subprocess
 import sys
 import os
 import logging
+import time
 from datetime import date
 import requests
 from packaging.version import Version
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
 COMMIT_BATCH_SIZE = 50
+GRAPHQL_MAX_RETRIES = 3
+GRAPHQL_RETRY_DELAY = 2  # seconds, doubled each attempt
 
 
 class fg:  # pylint: disable=too-few-public-methods
@@ -207,11 +210,23 @@ def get_pullrequest_infos(args, repo, hashes):
         query = _build_commit_batch_query(batch)
         variables = {"owner": "osbuild", "repo": repo}
 
-        try:
-            data = graphql_request(args.token, query, variables)
-        except Exception as e:
-            msg_info(f"GraphQL request failed for batch: {e}")
-            continue
+        last_exc = None
+        for attempt in range(GRAPHQL_MAX_RETRIES):
+            try:
+                data = graphql_request(args.token, query, variables)
+                break
+            except Exception as e:
+                last_exc = e
+                if attempt < GRAPHQL_MAX_RETRIES - 1:
+                    delay = GRAPHQL_RETRY_DELAY * (2 ** attempt)
+                    msg_info(f"GraphQL request failed (attempt {attempt + 1}/{GRAPHQL_MAX_RETRIES}): {e}")
+                    msg_info(f"Retrying in {delay}s...")
+                    time.sleep(delay)
+        else:
+            msg_error(
+                f"GraphQL request failed after {GRAPHQL_MAX_RETRIES} attempts for commits "
+                f"{batch_start + 1}-{batch_end}: {last_exc}"
+            )
 
         repo_data = data.get("repository", {})
         for i, commit_hash in enumerate(batch):
