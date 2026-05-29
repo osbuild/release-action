@@ -8,6 +8,10 @@ inputs:
   slack_bot_token:
     description: "A Slack bot OAuth token"
     required: true
+  branch:
+    description: "Branch to commit the version bump to"
+    required: false
+    default: 'main'
   build_release_artifacts:
     description: "Run `make release_artifacts` and expect results in `release_artifacts/`"
     required: false
@@ -53,7 +57,7 @@ runs:
       # https://github.com/marketplace/actions/add-commit
       uses: EndBug/add-and-commit@v7
       with:
-        branch: main
+        branch: ${{ inputs.branch }}
         message: "Post release version bump\n\n[skip ci]"
         add: "-u *"
 
