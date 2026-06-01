@@ -12,6 +12,9 @@ inputs:
     description: "Branch to commit the version bump to"
     required: false
     default: 'main'
+  tag:
+    description: "The tag to release. Required for workflow_dispatch triggers where GITHUB_REF is a branch, not a tag."
+    required: false
   build_release_artifacts:
     description: "Run `make release_artifacts` and expect results in `release_artifacts/`"
     required: false
@@ -34,6 +37,8 @@ runs:
     - name: Generate release information
       run: ${{ github.action_path }}/release-info.sh
       shell: bash
+      env:
+        INPUT_TAG: ${{ inputs.tag }}
 
     - name: Build additional release artifacts (optionally)
       run: make release_artifacts
@@ -44,6 +49,7 @@ runs:
       # https://github.com/marketplace/actions/create-release
       uses: ncipollo/release-action@v1.14.0
       with:
+        tag: ${{ inputs.tag }}
         name: "${{  env.release_version }}"
         token: "${{ inputs.TOKEN }}"
         bodyFile: "release.md"
