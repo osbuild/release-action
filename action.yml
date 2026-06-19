@@ -15,6 +15,14 @@ inputs:
   tag:
     description: "The tag to release. Required for workflow_dispatch triggers where GITHUB_REF is a branch, not a tag."
     required: false
+  semver:
+    description: "Use semantic versioning for the post-release version bump"
+    required: false
+    default: 'false'
+  semver_bump_type:
+    description: "The type of semantic versioning bump to perform: 'major', 'minor', or 'patch'"
+    required: false
+    default: 'patch'
   build_release_artifacts:
     description: "Run `make release_artifacts` and expect results in `release_artifacts/`"
     required: false
@@ -56,7 +64,12 @@ runs:
         artifacts: "release_artifacts/*"
 
     - name: Bump version
-      run: ${{ github.action_path }}/bump-version.sh "${{  env.release_version }}"
+      run: |
+        if [[ "${{ inputs.semver }}" == "true" ]]; then
+          ${{ github.action_path }}/bump-version.sh "${{ env.release_version }}" "${{ inputs.semver_bump_type }}"
+        else
+          ${{ github.action_path }}/bump-version.sh "${{ env.release_version }}"
+        fi
       shell: bash
 
     - name: Commit new version
