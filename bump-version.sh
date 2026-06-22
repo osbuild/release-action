@@ -8,6 +8,7 @@ fi
 CURRENT="$1"
 BUMP_TYPE="${2:-}"
 
+NEW_MAJOR=0
 if [ -n "$BUMP_TYPE" ]; then
   IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
   MINOR="${MINOR:-0}"
@@ -15,7 +16,8 @@ if [ -n "$BUMP_TYPE" ]; then
 
   case "$BUMP_TYPE" in
     major)
-      VERSION="$((MAJOR + 1)).0.0"
+      NEW_MAJOR=$((MAJOR+1))
+      VERSION="${NEW_MAJOR}.0.0"
       ;;
     minor)
       VERSION="${MAJOR}.$((MINOR + 1)).0"
@@ -44,4 +46,14 @@ fi
 
 if [ -f "osbuild/__init__.py" ]; then
   sed -i -E "s/(__version__ = \")[0-9]+[0-9.]*/\1$VERSION/" osbuild/__init__.py
+fi
+
+
+if [ -f "go.mod" ] && (( NEW_MAJOR > 1 )); then
+    # update the go module name to match the major version
+    module="$(go list -m)"
+    # slice off version if it already has one
+    module="$(sed -E 's/\/v[0-9]+$//' <<< "${module}")"
+
+    go mod edit -module "${module}/v$((MAJOR + 1))"
 fi
