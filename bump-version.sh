@@ -55,5 +55,5 @@ if [ -f "go.mod" ] && (( NEW_MAJOR > 1 )); then
     # slice off version if it already has one
     module="$(sed -E 's/\/v[0-9]+$//' <<< "${module}")"
 
-    go mod edit -module "${module}/v$((MAJOR + 1))"
+    go mod edit -module "${module}/v${NEW_MAJOR}"
 fi
