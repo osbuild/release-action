@@ -23,6 +23,10 @@ inputs:
     description: "The version to set. If not provided, the version will be determined automatically."
     required: false
     default: ""
+  base_branch:
+    description: "Set the release branch (default: github.ref_name)."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -52,7 +56,7 @@ runs:
 
     - name: Create and push tag
       env:
-        BASE_BRANCH: ${{ env.GITHUB_REF_NAME }}
+        BASE_BRANCH: ${{ inputs.BASE_BRANCH || env.GITHUB_REF_NAME }}
         VERSION: ${{ inputs.VERSION }}
         SEMVER_BUMP_TYPE: ${{ inputs.SEMVER_BUMP_TYPE }}
       run: |
