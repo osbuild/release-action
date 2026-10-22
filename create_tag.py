@@ -380,7 +380,10 @@ def create_release_tag(args, repo, tag, latest_tag):
         msg_info(f"DRY_RUN: Would create a tag '{tag}' with message:\n{message}")
         return
 
-    res = run_command(['git', 'tag', '-m', message, tag, 'HEAD'])
+    try:
+        res = run_command(['git', 'tag', '-m', message, tag, 'HEAD'], check=True)
+    except subprocess.CalledProcessError as e:
+        msg_error(f"Failed to create tag '{tag}': {e.stderr.strip()}")
     logging.debug(res)
     msg_ok(f"Created tag '{tag}' with message:\n{message}")
 
@@ -475,7 +478,10 @@ def main():
         sys.exit(0)
 
     # Push the tag
-    res = run_command(['git', 'push', args.remote, tag])
+    try:
+        res = run_command(['git', 'push', args.remote, tag], check=True)
+    except subprocess.CalledProcessError as e:
+        msg_error(f"Failed to push tag '{tag}' to remote '{args.remote}': {e.stderr.strip()}")
     logging.debug(res)
     msg_ok(f"Pushed tag '{tag}' to remote '{args.remote}'")
 
