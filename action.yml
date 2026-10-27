@@ -34,6 +34,7 @@ runs:
     - name: Checkout current repo
       uses: actions/checkout@v3
       with:
+          ref: "${{ inputs.BASE_BRANCH }}"
           token: "${{ inputs.TOKEN }}"
           fetch-depth: 0
 
