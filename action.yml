@@ -50,7 +50,7 @@ runs:
 
     - name: Set up git
       run:  |
-        git clone https://"${{ inputs.TOKEN }}"@github.com/"${{ github.repository }}".git ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}
+        git clone -b "${{ inputs.BASE_BRANCH || env.GITHUB_REF_NAME }}" https://"${{ inputs.TOKEN }}"@github.com/"${{ github.repository }}".git ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}
         git config --global user.email "${{ inputs.EMAIL }}"
         git config --global user.name "${{ inputs.USERNAME }}"
       shell: bash
