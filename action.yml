@@ -50,14 +50,14 @@ runs:
 
     - name: Set up git
       run:  |
-        git clone -b "${{ inputs.BASE_BRANCH || env.GITHUB_REF_NAME }}" https://"${{ inputs.TOKEN }}"@github.com/"${{ github.repository }}".git ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}
+        git clone -b "${{ inputs.BASE_BRANCH || github.ref_name  }}" https://"${{ inputs.TOKEN }}"@github.com/"${{ github.repository }}".git ${{ github.action_path }}/${{ env.REPOSITORY_NAME }}
         git config --global user.email "${{ inputs.EMAIL }}"
         git config --global user.name "${{ inputs.USERNAME }}"
       shell: bash
 
     - name: Create and push tag
       env:
-        BASE_BRANCH: ${{ inputs.BASE_BRANCH || env.GITHUB_REF_NAME }}
+        BASE_BRANCH: ${{ inputs.BASE_BRANCH || github.ref_name }}
         VERSION: ${{ inputs.VERSION }}
         SEMVER_BUMP_TYPE: ${{ inputs.SEMVER_BUMP_TYPE }}
       run: |
